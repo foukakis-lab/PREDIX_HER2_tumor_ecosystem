@@ -6,7 +6,7 @@ df=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/transcriptomic
 clin=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.rds")
 df=left_join(df,clin,by="patientID")%>%as.data.frame()
 table(df$sspbc.subtype,df$Response)
-fig3c=df[,c("patientID","Arm","sspbc.subtype","Response")]
+fig4a=df[,c("patientID","Arm","sspbc.subtype","Response")]
 
 df$sspbc.bin="Non-HER2"
 df$sspbc.bin[df$sspbc.subtype=="Her2"]="HER2-enriched"
@@ -72,7 +72,7 @@ meta=meta[,c("sampleID","patientID")]
 MS$patientID=as.integer(MS$patientID)
 MS=left_join(meta,MS,by="patientID")
 MS$sampleID=NULL
-fig5e=MS
+fig4b=MS
 #saveRDS(MS,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Proteomic/ERBB2_MS.rds")
 gghistogram(MS, x = "Zscore", bins = 41, rug = TRUE,
             color = "HER2_low", fill = "HER2_low",
@@ -389,7 +389,6 @@ interaction_1<- glm(as.numeric(pCR) ~ ERBB2_class+ER+Arm, family = "binomial", d
 interaction_2<- glm(as.numeric(pCR) ~ ERBB2_class+ER+Arm+Arm*ERBB2_class, family = "binomial", data = data)
 lrtest(interaction_1,interaction_2)
 
-# Fig4f
 library(tidyverse);library(tableone);library(data.table);library(lmtest);library(forestploter)
 df=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure4/Subgroup_Forestplot.csv")
 df$DHP <- ifelse(is.na(df$DHP), "", df$DHP)

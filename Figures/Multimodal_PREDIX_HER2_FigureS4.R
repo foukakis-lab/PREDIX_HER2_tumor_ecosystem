@@ -103,17 +103,6 @@ ggplot(long_data, aes(fill = signature, y = value, x =sampleID)) +
         panel.border = element_rect(colour = "black", fill=NA, size=0.8),
         plot.margin = unit(c(0.5,0,0.2,1), "lines"))
 
-##########FigureS4c Mut Sig#########
-library(tidyverse);library(data.table);library(pheatmap)
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.rds")
-genomic=left_join(genomic,clin,by="patientID")
-var=c("CX1","CX2","CX3","CX4","CX5","CX9")
-df=genomic[,var];row.names(df)=genomic$sampleID;df=t(df)
-ann_df <-genomic[,c("sampleID","Arm","ER")]
-row.names(ann_df) <- ann_df$sampleID
-pheatmap(df)
-
 ##########FigureS4c cor matrix#########
 library(corrplot)
 genomic=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.rds")
@@ -129,7 +118,7 @@ corrplot(M, p.mat = testRes$p, tl.col = "black",method = 'circle', type = 'lower
          order = 'AOE', diag = FALSE,col =c("#053061","#246BAE","#549EC9","#A7CFE4", "#E5F0F6","#FDEBDF","#F7B698","#DC6F58","#B51F2E","#67001F"))$corrPos -> p1
 text(p1$x, p1$y, round(p1$corr, 2))
 # 25X25 20%
-##########FigureS4d#########
+##########FigureS4d
 library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
 library(forestplot);library(ggpubr)
 source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
@@ -166,9 +155,7 @@ ggplot(data=results,aes(biomarker,log10P))+
         panel.border = element_rect(colour = "black", fill=NA, size=0.8),
         plot.margin = unit(c(0.5,0,0.2,1), "lines"))+
   coord_flip() 
-################################################
-#################COSMIC 6/13####################
-################################################
+##########FigureS4e  COSMIC 6/13
 library(readxl);library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
 library(forestplot);library(ggpubr)
 library(deconstructSigs);library(BSgenome.Hsapiens.UCSC.hg19);library(data.table)
@@ -242,87 +229,23 @@ res <- glm(as.numeric(pCR) ~ Signature.6 + ER.status, family = "binomial", data 
 ShowRegTable(res)
 res <- glm(as.numeric(pCR) ~ Signature.13 + ER.status, family = "binomial", data = d)
 ShowRegTable(res)
-################################################
-#################TMB clonal ####################
-################################################
-library(readxl);library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
-library(forestplot);library(ggpubr);library(data.table)
-meta=read_excel("E:/Projects/PREDIX_HER2/Multimodal/Data/Validation/transneo/41586_2021_4278_MOESM4_ESM.xlsx",sheet=1)%>%as.data.frame()
-meta=meta[meta$HER2.status=="POS",]
-maf=read_excel("E:/Projects/PREDIX_HER2/Multimodal/Data/Validation/transneo/41586_2021_4278_MOESM4_ESM.xlsx",sheet=2)%>%as.data.frame()
-maf=maf[maf$Donor.ID%in%meta$Donor.ID,]
-table(maf$MAF_Variant)
-vc.nonSilent = c("Frame_Shift_Del", "Frame_Shift_Ins", "Splice_Site", "Translation_Start_Site",
-                 "Nonsense_Mutation", "Nonstop_Mutation", "In_Frame_Del",
-                 "In_Frame_Ins", "Missense_Mutation")
-maf_clone=maf%>%filter(MAF_Variant%in%vc.nonSilent,ClonalStatus=="CLONAL",tumour.vaf>0.05)
-freq=maf_clone%>%group_by(Donor.ID)%>%summarise(n = n())%>%as.data.frame()
-tmb_clone=data.frame(Donor.ID=freq$Donor.ID,TMB_clone=freq$n/45.54)
-meta=left_join(meta,tmb_clone,by="Donor.ID")
-meta$TMB_clone[is.na(meta$TMB_clone)]=0
-
-meta=meta[meta$pCR.RD!="NA",]
-meta$pCR=0
-meta$pCR[meta$pCR.RD=="pCR"]=1
-res <- glm(as.numeric(pCR) ~ TMB_clone + ER.status, family = "binomial", data = meta)
-ShowRegTable(res)
-
-##########FigureS4f#########
-library(tidyverse);library(data.table);library("survival");library(survminer)
+##########FigureS4f
+library(ggpubr)
 clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.rds")
-genomic=left_join(genomic,clin,by="patientID")
-genomic=genomic[genomic$Arm=="T-DM1",]
-cutoff=quantile(genomic$LOH_Del_burden, probs = c(0.75))
-genomic$group="low"
-genomic$group[genomic$LOH_Del_burden>0.21]="high"
-# 4. Fit survival curves and visualize
-fit <- survfit(Surv(EFS.time,EFS.status) ~ group, data = genomic)
-ggsurvplot(fit,data = genomic, palette = c("#BC3C29FF","#6F99ADFF"),
-           pval = TRUE,
-           break.time.by = 10,
-           xlim = c(0, 60))
-# 5X5 50%
-library(tableone)
-table(genomic$group)
-cox.test <- coxph(Surv(EFS.time,EFS.status)~group+as.factor(ER)+as.factor(TUMSIZE)+as.factor(ANYNODES), data=genomic) ##DII_density_with_supp
-ShowRegTable(cox.test)
-test.ph <- cox.zph(cox.test)
-test.ph
-##########FigureS4g,h#########
-library(Blasso);library(tidyverse)
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.rds")
-genomic=left_join(genomic,clin,by="patientID")
-genomic=genomic[genomic$Arm=="DHP",]
-genomic=genomic[genomic$Arm=="T-DM1",] ###
-library("survival");library(survminer)
-# 1. Determine the optimal cutpoint of variables
-res.cut <- surv_cutpoint(genomic, time = "EFS.time", event = "EFS.status",variables = c("COSMIC.Signature.13"))
-summary(res.cut)
-# 2. Plot cutpoint for DEPDC1
-# palette = "npg" (nature publishing group), see ?ggpubr::ggpar
-plot(res.cut, "COSMIC.Signature.13", palette = "npg")
-# 3. Categorize variables
-res.cat <- surv_categorize(res.cut)
-head(res.cat)
-res.cat$ER=genomic$ER
-res.cat$TUMSIZE=genomic$TUMSIZE
-res.cat$ANYNODES=genomic$ANYNODES
-# 4. Fit survival curves and visualize
-fit <- survfit(Surv(EFS.time,EFS.status) ~COSMIC.Signature.13, data = res.cat)
-ggsurvplot(fit,data = res.cat, palette = c("#BC3C29FF","#6F99ADFF"),
-           pval = TRUE,
-           break.time.by = 10,
-           xlim = c(0, 60))
-library(tableone)
-table(res.cat$COSMIC.Signature.13)
-res.cat$COSMIC.Signature.13=factor(res.cat$COSMIC.Signature.13,levels = c("low","high"))
-cox.test <- coxph(Surv(EFS.time,EFS.status)~as.factor(COSMIC.Signature.13)+as.factor(ER)+as.factor(TUMSIZE)+as.factor(ANYNODES), data=res.cat) ##DII_density_with_supp
-ShowRegTable(cox.test)
-table(res.cat$COSMIC.Signature.13)
+genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")%>%as.data.frame()
+genomic=inner_join(genomic,clin,by="patientID")%>%as.data.frame()
+cna=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/CUTseq/GISTIC2/PREDIX_HER2_baseline/PREDIX_HER2_CUTseq_gistics2_baseline_gene_curated.txt")%>%as.data.frame()
+data=left_join(genomic,cna,by="patientID")
 
-##########FigureS4i#########
+ggscatter(data, x = "BRCA2", y = "LOH_Del_burden",
+          add = "reg.line",  # Add regressin line
+          xlim=c(-1,1),ylim=c(0,0.5),size = 0.5,
+          add.params = list(color = "#0E4C92", fill = "lightgray"), # Customize reg. line
+          conf.int = TRUE # Add confidence interval
+) + stat_cor(method = "pearson", label.x = 0.3, label.y = 0.5) 
+
+#3.5X3.5
+##########FigureS4g#########
 source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
 clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
 genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")%>%as.data.frame()
@@ -360,99 +283,7 @@ ggplot(Interact_result,
        y = "",
        color = "Genomic Biomarker")
 #9X3
-##########FigureS4j#########
-library(ggpubr)
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")%>%as.data.frame()
-genomic=inner_join(genomic,clin,by="patientID")%>%as.data.frame()
-cna=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/CUTseq/GISTIC2/PREDIX_HER2_baseline/PREDIX_HER2_CUTseq_gistics2_baseline_gene_curated.txt")%>%as.data.frame()
-data=left_join(genomic,cna,by="patientID")
-cor.test(data$BRCA2,data$COSMIC.Signature.13)
-data$COSMIC.Signature.13=scale(data$COSMIC.Signature.13)
 
-ggscatter(data, x = "BRCA2", y = "COSMIC.Signature.13",
-          add = "reg.line",  # Add regressin line
-          xlim=c(-1,1),ylim=c(-10,10),size = 0.5,
-          add.params = list(color = "#0E4C92", fill = "lightgray"), # Customize reg. line
-          conf.int = TRUE # Add confidence interval
-) + stat_cor(method = "pearson", label.x = 0.3, label.y = 8) 
-
-ggscatter(data, x = "BRCA2", y = "LOH_Del_burden",
-          add = "reg.line",  # Add regressin line
-          xlim=c(-1,1),ylim=c(0,0.5),size = 0.5,
-          add.params = list(color = "#0E4C92", fill = "lightgray"), # Customize reg. line
-          conf.int = TRUE # Add confidence interval
-) + stat_cor(method = "pearson", label.x = 0.3, label.y = 0.5) 
-
-#3.5X3.5
-##################################
-###########FigureS4A,B############
-##################################
-library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
-library(forestplot)
-source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")
-variable=colnames(genomic)[3:ncol(genomic)]
-genomic=left_join(genomic,clin,by="patientID")%>%as.data.frame()
-colnames(genomic)
-#######ER-negative
-results=Logistic_batch(genomic[genomic$ER=="negative",],"pCR","Arm",variable)%>%as.data.frame()
-colnames(results)
-biomarker=union(results$biomarker[results$TDM1_lr_p<0.106],results$biomarker[results$DHP_lr_p<0.106])
-TDM1=results[results$biomarker%in%biomarker,c("biomarker","TDM1_OR","TDM1_lr_p")]
-TDM1$group="TDM1"
-DHP=results[results$biomarker%in%biomarker,c("biomarker","DHP_OR","DHP_lr_p")]
-DHP$group="DHP"
-colnames(TDM1)=c("Genomic","OR","Pvalue","group")
-colnames(DHP)=c("Genomic","OR","Pvalue","group")
-df=rbind(TDM1,DHP)
-df$Pvalue=as.numeric(df$Pvalue)
-df$log10P=-log10(df$Pvalue)
-baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
-source (paste0(baseDir,"/Code/theme.R"))
-figure_font_size=13
-ggplot(data=df,aes(Genomic,log10P,fill=group))+
-  geom_bar(stat="identity", color="black", position=position_dodge(),width=0.7,size=0.25)+
-  scale_fill_Arm(name="Treatment Arm")+
-  labs(x="Genomic Metrics",y="-log10(p value)")+
-  theme_manuscript(base_size = figure_font_size)+
-  theme(strip.background = element_blank(),
-        panel.grid.major.x  = element_blank(),
-        axis.line = element_blank(),
-        strip.text = element_text(size = figure_font_size),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.8),
-        plot.margin = unit(c(0.5,0,0.2,1), "lines"))+
-  coord_flip()
-
-#######ER-positive
-results=Logistic_batch(genomic[genomic$ER=="positive",],"pCR","Arm",variable)%>%as.data.frame()
-colnames(results)
-biomarker=union(results$biomarker[results$TDM1_lr_p<0.106],results$biomarker[results$DHP_lr_p<0.106])
-TDM1=results[results$biomarker%in%biomarker,c("biomarker","TDM1_OR","TDM1_lr_p")]
-TDM1$group="TDM1"
-DHP=results[results$biomarker%in%biomarker,c("biomarker","DHP_OR","DHP_lr_p")]
-DHP$group="DHP"
-colnames(TDM1)=c("Genomic","OR","Pvalue","group")
-colnames(DHP)=c("Genomic","OR","Pvalue","group")
-df=rbind(TDM1,DHP)
-df$Pvalue=as.numeric(df$Pvalue)
-df$log10P=-log10(df$Pvalue)
-baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
-source (paste0(baseDir,"/Code/theme.R"))
-figure_font_size=13
-ggplot(data=df,aes(Genomic,log10P,fill=group))+
-  geom_bar(stat="identity", color="black", position=position_dodge(),width=0.7,size=0.25)+
-  scale_fill_Arm(name="Treatment Arm")+
-  labs(x="Genomic Metrics",y="-log10(p value)")+
-  theme_manuscript(base_size = figure_font_size)+
-  theme(strip.background = element_blank(),
-        panel.grid.major.x  = element_blank(),
-        axis.line = element_blank(),
-        strip.text = element_text(size = figure_font_size),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.8),
-        plot.margin = unit(c(0.5,0,0.2,1), "lines"))+
-  coord_flip()
 
 
 

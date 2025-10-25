@@ -135,7 +135,6 @@ geneList=Hallmark
 # fgsea - get Normalised Enrichment Score
 # For DHP
 df=res_DHP[!is.na(res_DHP$padj),]
-#df$enrichment_score <- (2*as.numeric(df$log2FoldChange > 0) - 1) * -log10(df$padj) # signed p-value
 df$enrichment_score <-df$log2FoldChange
 df <- df[order(df$enrichment_score, decreasing = TRUE),]
 ranks <- df$enrichment_score
@@ -146,7 +145,6 @@ gse_dhp$pathway <- gsub("HALLMARK_","",gse_dhp$pathway)
 row.names(gse_dhp)=gse_dhp$pathway
 # For T-DM1
 df=res_TDM1[!is.na(res_TDM1$padj),]
-#df$enrichment_score <- (2*as.numeric(df$log2FoldChange > 0) - 1) * -log10(df$padj) # signed p-value
 df$enrichment_score <-df$log2FoldChange
 df <- df[order(df$enrichment_score, decreasing = TRUE),]
 ranks <- df$enrichment_score
@@ -201,121 +199,7 @@ ggarrange(dhp,tdm1,nrow = 1,
 # landscape 11X6
 
 
-
-
-
-
-
-
-
-
-
-
-###############################
-###########KEGG pathway########
-###############################
-library(IOBR);library(data.table)
-tpm=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/TMM-normalized-TPM.rds")
-txi=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/PREDIX_HER2_baseline_curated_txi.rds")
-tpm=txi$abundance
-res=calculate_sig_score(eset = tpm, signature = kegg, method = "ssgsea",parallel.size=16)
-res[,2:ncol(res)]=scale(res[,2:ncol(res)])
-kegg=colnames(res)[2:ncol(res)]
-res$patientID=substr(res$ID,9,12)%>%as.integer()
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-res=left_join(res,clin,by="patientID")
-res_TDM1=batch_wilcoxon(
-  res[res$Arm=="T-DM1",],
-  target = "Response",
-  feature =kegg,
-  feature_manipulation = FALSE
-)
-
-res_DHP=batch_wilcoxon(
-  res[res$Arm=="DHP",],
-  target = "Response",
-  feature =kegg,
-  feature_manipulation = FALSE
-)
-require(openxlsx)
-list_of_datasets <- list("KEGG_TDM1"=res_TDM1,
-                         "KEGG_DHP"=res_DHP)
-write.xlsx(list_of_datasets, file ="E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/KEGG_ssGSEA.xlsx")
-
-
-#install KEGG_db https://github.com/YuLab-SMU/clusterProfiler/issues/561
-library(clusterProfiler);library(KEGG.db);library(ReactomePA)
-#KEGG pathway over-representation analysis
-protein=as.data.frame(fread("E:/Projects/PREDIX_HER2/Multimodal/Resource/gene_with_protein_product.txt"))
-protein$gene=protein$symbol
-res_DHP=left_join(res_DHP,protein[,c("gene",'entrez_id')],by="gene")
-res_TDM1=left_join(res_TDM1,protein[,c("gene",'entrez_id')],by="gene")
-genelist=res_DHP$entrez_id[res_DHP$log2FoldChange>(0.5)&res_DHP$padj<0.05]%>%as.character()
-genelist=res_TDM1$entrez_id[res_TDM1$log2FoldChange>0&res_TDM1$padj<0.05]%>%na.omit()%>%as.character()
-kegg <- enrichKEGG(gene = genelist,use_internal_data=T,pvalueCutoff = 0.05,pAdjustMethod="BH")
-kegg=kegg@result%>%as.data.frame()%>%dplyr::filter(p.adjust<0.1)
-
-x <- enrichPathway(gene=genelist, pvalueCutoff = 0.05, readable=TRUE)
-x=x@result
-
-
-
-#####################################
-##########Figure3.f #################
-#####################################
-library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
-library(forestplot);library(ggpubr)
-source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
-rna=fread('E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/transcriptomic_metrics_PREDIX_HER2.txt')
-clin=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.rds")
-data=left_join(rna,clin,by="patientID")%>%as.data.frame()
-data$ERBB2_fusion=as.factor(data$ERBB2_fusion)
-data$chr17q12_fusion=as.factor(data$chr17q12_fusion)
-variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
-           "Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism",
-           "Glycolysis","Hypoxia")
-norm_variable=c("pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
-                "Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism",
-                "Glycolysis","Hypoxia")
-data[,norm_variable]=scale(data[,norm_variable]) 
-
-
-results=Logistic_batch_adjER(data,"pCR","Arm",variable,"ER")%>%as.data.frame()
-fig3f=results
-TDM1=results[,c("biomarker","TDM1_OR","TDM1_lr_p")]
-TDM1$group="TDM1"
-DHP=results[,c("biomarker","DHP_OR","DHP_lr_p")]
-DHP$group="DHP"
-colnames(TDM1)=c("Signature","OR","Pvalue","group")
-colnames(DHP)=c("Signature","OR","Pvalue","group")
-df=rbind(TDM1,DHP)
-df$Pvalue=as.numeric(df$Pvalue)
-df$log10P=-log10(df$Pvalue)
-df$logOR=log(as.numeric(df$OR))
-df$group=factor(df$group,levels = c("TDM1","DHP"))
-unique(df$Signature)
-df$Signature=factor(df$Signature,levels =c("Hypoxia","Glycolysis","Fatty_acid_metabolism","Glutathione_metabolism",
-                                           "Citrate_cycles","Purine_metabolism","Oxidative_phosphorylation","Apoptosis","EMT","Exosome",
-                                           "Endocytosis","Lysosome","ABC_transporter","pik3ca_sig",
-                                           "HER2DX_pCR_likelihood_score","Taxane_response"))
-df=df[order(df$Signature),]
-baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
-source (paste0(baseDir,"/Code/theme.R"))
-figure_font_size=13
-ggplot(data=df,aes(Signature,logOR,fill=group))+
-  geom_bar(stat="identity", color="black", position=position_dodge(),width=0.7,size=0.25)+
-  scale_fill_modelbarplot(name="Treatment Arm")+
-  labs(x="Gene Signature",y="lnOR")+
-  theme_manuscript(base_size = figure_font_size)+
-  theme(strip.background = element_blank(),
-        panel.grid.major.x  = element_blank(),
-        axis.line = element_blank(),
-        strip.text = element_text(size = figure_font_size),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.8),
-        plot.margin = unit(c(0.5,0.5,0.5,1), "lines"))+
-  coord_flip()+scale_y_continuous(breaks = c(-0.5, 0, 0.5))
-
-#####Fig3.d 
+####Fig3.d 
 library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
 library(forestplot);library(ggpubr)
 source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
@@ -571,7 +455,6 @@ df_FC$Label[df_FC$Group=="CNA_TDM1_lnOR"] <- with(df_FC[df_FC$Group=="CNA_TDM1_l
 df_FC$Label[df_FC$Group=="CNA_DHP_lnOR"] <- with(df_FC[df_FC$Group=="CNA_DHP_lnOR",], ifelse(CNA_DHP_p < 0.01, paste(Value, "\n***", sep=""),
                                                                                              ifelse(CNA_DHP_p < 0.05, paste(Value, "\n**", sep=""),
                                                                                                     ifelse(CNA_DHP_p <= 0.11, paste(Value, "\n*", sep=""), as.character(Value)))))
-# 绘制每个子集
 p1 <- ggplot(df_amp_rate, aes(`Gene Symbol`, Group, fill=Value)) +
   geom_tile(color="grey2", size=0.7) +
   geom_text(aes(label=paste0(Value,"%")), color="black", size=4) +
@@ -611,25 +494,21 @@ p4 <- ggplot(df_FC, aes(`Gene Symbol`, Group, fill=Value)) +
   theme(axis.text=element_text(colour='black', size=9)) +
   theme(axis.text.x=element_text(angle=60, hjust=0.9, vjust=0.9, size=9))
 
-# 提取图例，并设置图例文本和标题的大小
 legend1 <- get_legend(p1) 
 legend2 <- get_legend(p2)
 legend3 <- get_legend(p3)
 legend4 <- get_legend(p4)
-# 创建一个包含所有图例的行
 combined_legend <- plot_grid(legend1, legend2, legend3, legend4, ncol = 4, align = 'h')
 
-# 去掉各个子图的图例
 p1 <- p1 + theme(legend.position="none")
 p2 <- p2 + theme(legend.position="none")
 p3 <- p3 + theme(legend.position="none")
 p4 <- p4 + theme(legend.position="none")
-# 使用 cowplot 组合图
 combined_plot <- plot_grid(combined_legend, 
                            plot_grid(p1, p2, p3, p4, ncol = 1, align = "v", rel_heights = c(1, 1, 1, 4)),
                            ncol = 1, rel_heights = c(0.2, 0.8))
 
-# 绘制图例
+
 combined_plot
 
 # 12X7.5
@@ -659,14 +538,10 @@ col_fun = colorRamp2(
 )
 data=cbind(res_TDM1,res_DHP,prot_TDM1,prot_DHP)
 
-# 选择 logFC 部分作为热图矩阵
+# logFC 
 mat = data[, c("log2FoldChange_rna_dhp","logFC_prot_dhp","log2FoldChange_rna_tdm1","logFC_prot_tdm1")]
-rownames(mat) = data$gene_rna_tdm1   # 保持基因名字作为行名
-
-# 转换成数值矩阵
+rownames(mat) = data$gene_rna_tdm1   
 mat = as.matrix(mat)
-
-# 设置列名更直观
 colnames(mat) = c("RNA_DHP","Prot_DHP", "RNA_TDM1", "Prot_TDM1")
 
 library(ComplexHeatmap)
@@ -692,10 +567,6 @@ ht = Heatmap(
 ht
 
 # Portrait 4.5 X 5.5 25%
-
-
-
-
 
 library(openxlsx)
 data_list=list("fig3a"=fig3a%>%as.data.frame(),

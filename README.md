@@ -13,27 +13,21 @@ This repository contains the code and workflows used for analyses presented in t
 </div>
 
 
-Data pre-processing
+Data pre-processing & Multi-omics metrics curation
 -----------
 
--   RNA-seq: nf-core ranseq
+-   RNA-seq: nf-core ranseq, TRUST4, Danarher gene signature, sspbc
 -   WES: nf-core sarek/hlatyping, PureCN best practices, GISTIC2.0, HLALOH, pVACseq, TcellExtrect  
 -   CUT-seq: GATK copy number pipeline, GISTIC2.0
--   Proteomics: QC 
+-   Proteomics: data processing, quality control, differential abundance analysis
+-   Proteogenomics: CNA-mRNA-protein cor 
 -   Xenium: QC, data integration, cluster/subcuster
 -   Digital image: FLOCK
-
-Multi-omics metrics curation
------------
-
--  RNA-seq: DEG, transcriptomic metrics
--  WES: genomic metrics
--  Proteogenomic analysis
 
 Figure
 -----------
 -  Figure1-7
--  FigureS1-9
+-  FigureS1-10
 
 ML pipeline
 -----------
@@ -53,9 +47,6 @@ nextflow run nf-core/rnaseq \
     --genome GRCh38 \
     -profile singularity
 ```
-
-Quick start
------------
 
 
 

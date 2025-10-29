@@ -8,7 +8,7 @@ clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curate
 genomic$patientID=as.integer(genomic$patientID)
 data=left_join(genomic,purity,by="sampleID")%>%left_join(clin,by="patientID")
 data=data[data$totalTMB*41.2>5,]
-ggscatter(data, x = "Purity", y = "totalTMB",
+p1=ggscatter(data, x = "Purity", y = "TMB_uniform",
                 add = "reg.line",  # Add regressin line
                 xlim=c(0.1,0.75),ylim=c(0,20),
                 add.params = list(color = "#0E4C92", fill = "lightgray"), # Customize reg. line
@@ -20,10 +20,10 @@ ggscatter(data, x = "Purity", y = "totalTMB",
 baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
 # load directory structure downloaded from github site
 source(paste0(baseDir,"/Code/theme.R"))
-d=data%>%select(c("ER","totalTMB"))
+d=data%>%select(c("ER","TMB_uniform"))
 d <- reshape2::melt(d,id.vars=c("ER"))
 figure_font_size=13
-Fig <-
+p2=Fig <-
   ggplot(d,aes(x=ER,y=value,fill=ER))+
   geom_boxplot(outlier.size = 0.5, width=0.7)+
   facet_wrap(variable~.,scales="free_y",nrow=1)+
@@ -40,6 +40,8 @@ Fig <-
         plot.margin = unit(c(0.5,0,0.2,1), "lines"))+ 
   coord_cartesian(ylim = c(0,20))
 Fig
+
+p1+p2
 
 #4X5 p 
 #############################################

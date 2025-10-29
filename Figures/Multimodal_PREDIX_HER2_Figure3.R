@@ -92,8 +92,7 @@ gene2=res_DHP$gene[!is.na(res_DHP$padj)&res_DHP$padj<0.05&abs(res_DHP$log2FoldCh
 row.names(x)=x$gene
 length(intersect(x$gene,c(gene1,gene2)))
 x=x[ intersect(x$gene,c(gene1,gene2)),]
-fig4b=x
-write.table(fig4b,file="E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure4/fig4b.txt",quote = F,row.names =F,sep="\t")
+fig3b=x
 library(ggplot2)
 br <- c(seq(min(x$r,na.rm = TRUE)-0.1,-0.000000001,by=0.05),
         seq(0,max(x$r,na.rm = TRUE),by=0.05))
@@ -157,7 +156,7 @@ row.names(gse_tdm1)=gse_tdm1$pathway
 term=union(gse_dhp$pathway[gse_dhp$padj<0.05&abs(gse_dhp$NES)>1],gse_tdm1$pathway[gse_tdm1$padj<0.05&abs(gse_tdm1$NES)>1])
 gse_dhp=gse_dhp[term,]
 gse_tdm1=gse_tdm1[term,]
-fig3b=cbind(gse_dhp,gse_tdm1)
+fig3c=cbind(gse_dhp,gse_tdm1)
 
 # Define the desired order for 'pathway'
 gse_dhp=gse_dhp[order(gse_dhp$NES),]
@@ -216,7 +215,7 @@ norm_variable=c("pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytos
 data[,norm_variable]=scale(data[,norm_variable]) 
 
 results=Logistic_batch_adjER(data,"pCR","Arm",variable,"ER")%>%as.data.frame()
-fig3f=results
+fig3d=results
 TDM1=results[,c("biomarker","TDM1_OR","TDM1_lr_p")]
 TDM1$group="TDM1"
 DHP=results[,c("biomarker","DHP_OR","DHP_lr_p")]
@@ -413,13 +412,13 @@ df$AMP_rate=round(100*df$AMP_rate,digits =0)
 df$CNA_RNA_cor=round(df$CNA_RNA_cor,digits =2)
 df$CNA_protein_cor=round(df$CNA_protein_cor,digits =2)
 all.equal(df$`Gene Symbol`,CNA_logi$biomarker,RNA_FC_TDM1$gene,RNA_FC_DHP$gene,Protein_FC_TDM1$gene,Protein_FC_DHP$gene)
-fig5d=df
 df$CNA_DHP_lnOR=CNA_logi$DHP_OR%>%round(digits = 2);df$CNA_DHP_p=CNA_logi$DHP_lr_p%>%as.numeric()%>%round(digits = 2);
 df$CNA_TDM1_lnOR=CNA_logi$TDM1_OR%>%round(digits = 2);df$CNA_TDM1_p=CNA_logi$TDM1_lr_p%>%as.numeric()%>%round(digits = 2);df$CNA_interact_p=CNA_logi$interaction_lr_p%>%as.numeric()%>%round(digits = 2);
 df$RNA_DHP_logFC=RNA_FC_DHP$log2FoldChange%>%round(digits = 2);df$RNA_DHP_padj=RNA_FC_DHP$padj%>%round(digits = 2)
 df$RNA_TDM1_logFC=RNA_FC_TDM1$log2FoldChange%>%round(digits = 2);df$RNA_TDM1_padj=RNA_FC_TDM1$padj%>%round(digits = 2)
 df$Prot_DHP_logFC=Protein_FC_DHP$logFC%>%round(digits = 2);df$Prot_DHP_p=Protein_FC_DHP$P.Value%>%round(digits = 2)
 df$Prot_TDM1_logFC=Protein_FC_TDM1$logFC%>%round(digits = 2);df$Prot_TDM1_p=Protein_FC_TDM1$P.Value%>%round(digits = 2)
+fig3g=df
 #### transfer data ####
 df2 <- df %>% tidyr::pivot_longer(cols = -c("Gene Symbol","Cytoband","CNA_DHP_p","CNA_TDM1_p","CNA_interact_p",
                                             "RNA_DHP_padj","RNA_TDM1_padj","Prot_DHP_p","Prot_TDM1_p"), 
@@ -537,7 +536,7 @@ col_fun = colorRamp2(
   c("#4575b4", "#91bfdb", "#f7f7f7", "#fc8d59", "#d73027")
 )
 data=cbind(res_TDM1,res_DHP,prot_TDM1,prot_DHP)
-
+fig3h=data
 # logFC 
 mat = data[, c("log2FoldChange_rna_dhp","logFC_prot_dhp","log2FoldChange_rna_tdm1","logFC_prot_tdm1")]
 rownames(mat) = data$gene_rna_tdm1   
@@ -572,7 +571,9 @@ library(openxlsx)
 data_list=list("fig3a"=fig3a%>%as.data.frame(),
                "fig3b"=fig3b%>%as.data.frame(),
                "fig3c"=fig3c%>%as.data.frame(),
-               "fig3f"=fig3f%>%as.data.frame())
+               "fig3d"=fig3d%>%as.data.frame(),
+               "fig3g"=fig3g%>%as.data.frame(),
+               "fig3h"=fig3h%>%as.data.frame())
 openxlsx::write.xlsx(data_list,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/Figure3.xlsx')
 
 

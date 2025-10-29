@@ -212,7 +212,7 @@ DHP$DHP_lr_p=as.numeric(DHP$DHP_lr_p)
 DHP$FDR=p.adjust(DHP$DHP_lr_p, method = "BH")
 DHP$lnOR=DHP$DHP_OR%>%log(base=exp(1))
 DHP$log10FDR=-log10(DHP$FDR)
-
+Fig.2c=DHP
 library(ggplot2)
 library(ggrepel)
 # FDR and color
@@ -247,7 +247,7 @@ TDM1$TDM1_lr_p=as.numeric(TDM1$TDM1_lr_p)
 TDM1$FDR=p.adjust(TDM1$TDM1_lr_p, method = "BH")
 TDM1$lnOR=TDM1$TDM1_OR%>%log(base=exp(1))
 TDM1$log10FDR=-log10(TDM1$FDR)
-
+Fig.2d=TDM1
 library(ggplot2)
 library(ggrepel)
 # FDR and color
@@ -320,7 +320,7 @@ unique(df$Genomic)
 df$Genomic=factor(df$Genomic,levels =c("HRD","LOH_Del_burden","CNV_burden","COSMIC.Signature.13","COSMIC.Signature.10","COSMIC.Signature.7","COSMIC.Signature.6",
                                        "COSMIC.Signature.3","COSMIC.Signature.2","TMB_clone","TMB_uniform"))
 df=df[order(df$Genomic),]
-
+Fig.2e=df
 baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
 source (paste0(baseDir,"/Code/theme.R"))
 figure_font_size=13
@@ -402,6 +402,7 @@ write.xlsx(list_of_datasets, file = "E:/Projects/PREDIX_HER2/Multimodal/Figures/
 # forest plot #
 library(data.table)
 df=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure1/Subgroup_Forestplot.csv")
+Fig.2f=df
 df$DHP <- ifelse(is.na(df$DHP), "", df$DHP)
 df$`T-DM1` <- ifelse(is.na(df$`T-DM1`), "", df$`T-DM1`)
 df$`P for interaction` <- ifelse(is.na(df$`P for interaction`), "", df$`P for interaction`)
@@ -436,9 +437,10 @@ plot(p)
 # export data
 
 library(openxlsx)
-data_list=list("fig2b"=fig2b%>%as.data.frame(),
-               "fig2c"=fig2c%>%as.data.frame(),
-               "fig2d"=fig2d%>%as.data.frame())
+data_list=list("fig2c"=Fig.2c%>%as.data.frame(),
+               "fig2d"=Fig.2d%>%as.data.frame(),
+               "fig2e"=Fig.2e%>%as.data.frame(),
+               "fig2f"=Fig.2f%>%as.data.frame())
 openxlsx::write.xlsx(data_list,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/Figure2.xlsx')
 
 

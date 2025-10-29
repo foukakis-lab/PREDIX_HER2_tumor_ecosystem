@@ -17,10 +17,10 @@ MS$MS=1
 MS=MS[,c("sampleID.ms","patientID","MS")]
 MS=MS[!duplicated(MS$patientID),]
 # Xenium
-xenium=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Xenium/xenium_meta.csv")
-xenium=xenium[xenium$tpt=="pre",]
+xenium=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Xenium/Xenium_baselineMeta_cell_state_curated.rds")
 xenium$xenium=1
 xenium=xenium[,c("patientID","xenium")]
+xenium=xenium[!duplicated(xenium$patientID),]
 xenium$patientID=as.character(xenium$patientID)
 # clin
 meta=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.rds")

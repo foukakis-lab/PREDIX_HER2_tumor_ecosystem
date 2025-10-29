@@ -96,6 +96,7 @@ results <- results %>%
   ))
 results$metrics=substr(results$biomarker,1,3)
 results$metrics=factor(results$metrics,levels = c("DNA","RNA","Pro","WSI"))
+fig7a=results
 ha=HeatmapAnnotation(Feature=results$metrics,
                      All=results$All,
                      DHP=results$DHP,
@@ -170,6 +171,7 @@ Int[, data := "Integrated - ROC AUC: 0.88 ± 0.08"]
 
 All <- rbind(Clin,DNA,RNA,Prot,WSI,Int)
 All=All[!is.na(All$tpr),]
+fig7b=All
 All$data=factor(All$data,levels = c("Clinic Only - ROC AUC: 0.67 ± 0.11","Genomic Only - ROC AUC: 0.71 ± 0.11",
                                     "Transcriptomic Only - ROC AUC: 0.83 ± 0.1","Proteomic Only - ROC AUC: 0.75 ± 0.1",
                                     "Digital Pathology Only - ROC AUC: 0.57 ± 0.11","Integrated - ROC AUC: 0.88 ± 0.08"))
@@ -220,6 +222,7 @@ Int[, data := "Integrated - ROC AUC: 0.84 ± 0.1"]
 
 All <- rbind(Clin,DNA,RNA,Prot,WSI,Int)
 All=All[!is.na(All$tpr),]
+fig7c=All
 All$data=factor(All$data,levels = c("Clinic Only - ROC AUC: 0.61 ± 0.16","Genomic Only - ROC AUC: 0.79 ± 0.15",
                                     "Transcriptomic Only - ROC AUC: 0.74 ± 0.1","Proteomic Only - ROC AUC: 0.65 ± 0.19",
                                     "Digital Pathology Only - ROC AUC: 0.57 ± 0.18","Integrated - ROC AUC: 0.84 ± 0.1"))
@@ -269,6 +272,7 @@ Int[, data := "Integrated - ROC AUC: 0.87 ± 0.1"]
 
 All <- rbind(Clin,DNA,RNA,Prot,WSI,Int)
 All=All[!is.na(All$tpr),]
+fig7d=All
 All$data=factor(All$data,levels = c("Clinic Only - ROC AUC: 0.61 ± 0.15","Genomic Only - ROC AUC: 0.78 ± 0.14",
                                     "Transcriptomic Only - ROC AUC: 0.84 ± 0.11","Proteomic Only - ROC AUC: 0.83 ± 0.11",
                                     "Digital Pathology Only - ROC AUC: 0.65 ± 0.16","Integrated - ROC AUC: 0.87 ± 0.1"))
@@ -289,6 +293,12 @@ ROC_DHP <- ggplot(All, aes(y = tpr, x = fpr, colour = data, group = data)) +
 ROC_DHP 
 ggsave(ROC_DHP , file = "E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure7/DHP_roc_curves.pdf", width = 6.2, height = 6.2)
 
+library(openxlsx)
+data_list=list("fig7a"=fig7a%>%as.data.frame(),
+               "fig7b"=fig7b%>%as.data.frame(),
+               "fig7c"=fig7c%>%as.data.frame(),
+               "fig7d"=fig7d%>%as.data.frame())
+openxlsx::write.xlsx(data_list,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/Figure7.xlsx')
 
 
 

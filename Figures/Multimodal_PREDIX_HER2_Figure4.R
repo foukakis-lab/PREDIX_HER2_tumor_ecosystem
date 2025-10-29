@@ -181,6 +181,7 @@ df=df[order(df$ERBB2_class),]
 row.names(df)=df$patientID
 protein=c("ERBB2","GRB7","MIEN1","AKT1","AKT2","MAP2K1","MAPK1","PTEN","TOP2A")
 df=df[,c("ERBB2_class","Arm","Response","EFS.status","sspbc.subtype","HER2_prot","ERBB2_PG","ER","HER2neu1","ERBB2_amp","ERBB2_mut",protein)]
+fig4c=df
 #### HER2DX group
 s1 = as.matrix(t(df[df$ERBB2_class=="Her2E ERBB2 PG-",protein]))   # subtype1
 S1_meta=df[colnames(s1),]
@@ -391,6 +392,7 @@ lrtest(interaction_1,interaction_2)
 
 library(tidyverse);library(tableone);library(data.table);library(lmtest);library(forestploter)
 df=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure4/Subgroup_Forestplot.csv")
+fig4e=df
 df$DHP <- ifelse(is.na(df$DHP), "", df$DHP)
 df$`T-DM1` <- ifelse(is.na(df$`T-DM1`), "", df$`T-DM1`)
 df$`P for interaction` <- ifelse(is.na(df$`P for interaction`), "", df$`P for interaction`)
@@ -420,3 +422,16 @@ p <- forest(df[,c(1:3,7:9)],
 plot(p)
 
 # 7.5X5
+
+
+
+library(openxlsx)
+data_list=list("fig4a"=fig4a%>%as.data.frame(),
+               "fig4b"=fig4b%>%as.data.frame(),
+               "fig4c"=fig4c%>%as.data.frame(),
+               "fig3e"=fig4e%>%as.data.frame())
+openxlsx::write.xlsx(data_list,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/Figure4.xlsx')
+
+
+
+

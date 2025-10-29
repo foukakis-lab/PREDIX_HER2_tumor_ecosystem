@@ -263,9 +263,9 @@ cancergenes<-fread('E:/Projects/PREDIX_HER2/Multimodal/Resource/Census_allMon No
 cancergenes=cancergenes$`Gene Symbol`
 driverGenes=c(driverGenes,cancergenes)
 
-res_DHP=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS5/DEqMS_output_DHP_pCR_RD.tsv")%>%as.data.frame()
+res_DHP=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/DEqMS_output_DHP_pCR_RD.tsv")%>%as.data.frame()
 row.names(res_DHP)=res_DHP$gene
-res_TDM1=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS5/DEqMS_output_TDM1_pCR_RD.tsv")%>%as.data.frame()
+res_TDM1=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/DEqMS_output_TDM1_pCR_RD.tsv")%>%as.data.frame()
 row.names(res_TDM1)=res_TDM1$gene
 res_TDM1=res_TDM1[res_DHP$gene,]
 
@@ -306,7 +306,7 @@ row.names(data)=data$ID
 data[genes_to_showname, ]$gene_label <- genes_to_showname
 colours = c('grey',"red", 'green3', 'gold3', 'blue')
 figS5i=data
-
+write.csv(figS5i, file = "E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/figS5i.csv")
 annot <- lapply(genes_to_showname, function(i) {
   row <- data[i, ]
   x <- row$x

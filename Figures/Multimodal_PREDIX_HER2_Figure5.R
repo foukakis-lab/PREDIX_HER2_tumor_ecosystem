@@ -22,6 +22,7 @@ df=rbind(DHP,TDM1)
 df$biomarker=gsub("coding_mutation_", "",df$biomarker)
 biomarker=df$biomarker
 df$OR=as.numeric(df$OR);df$LCI=as.numeric(df$LCI);df$UCI=as.numeric(df$UCI)
+fig5b=df
 #
 df |>
   group_by(group) |>
@@ -74,7 +75,7 @@ image_results=Logistic_batch_adjER(data,"pCR","Arm",varibale,"ER")%>%as.data.fra
 # merge
 results=rbind(rna_results,dna_results)%>%
   rbind(image_results)
-write.csv(results, file = "E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure5/Figure5d.csv")
+fig5c=results
 
 TDM1=results[,c("biomarker","TDM1_OR","TDM1_lr_p")]
 TDM1$group="TDM1"
@@ -162,6 +163,7 @@ ShowRegTable(whole)
 # forest plot #
 library(data.table)
 df=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure5/Subgroup_Forestplot.csv")
+fig5e=df
 df$DHP <- ifelse(is.na(df$DHP), "", df$DHP)
 df$`T-DM1` <- ifelse(is.na(df$`T-DM1`), "", df$`T-DM1`)
 df$`P for interaction` <- ifelse(is.na(df$`P for interaction`), "", df$`P for interaction`)
@@ -191,6 +193,14 @@ p <- forest(df[,c(1:3,7:9)],
 plot(p)
 
 #7X5
+
+
+
+library(openxlsx)
+data_list=list("fig5b"=fig5b%>%as.data.frame(),
+               "fig5c"=fig5c%>%as.data.frame(),
+               "fig5e"=fig5e%>%as.data.frame())
+openxlsx::write.xlsx(data_list,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/Figure5.xlsx')
 
 
 

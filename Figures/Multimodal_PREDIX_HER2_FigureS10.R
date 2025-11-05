@@ -29,7 +29,23 @@ cell_proportion_by_Niche=df %>%
   group_by(cell_state) %>%
   mutate(proportion = count / sum(count)) %>%
   ungroup()
-write.table(cell_proportion_by_Niche,file="E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/FigS10c.txt",quote = F,row.names =F,sep="\t")
+
+cell_proportion_by_patient=df %>%
+  group_by(cell_state, patientID) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(cell_state) %>%
+  mutate(proportion = count / sum(count)) %>%
+  ungroup()
+
+Niche_by_patient=df %>%
+  group_by(niche_clusters, patientID) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(niche_clusters) %>%
+  mutate(proportion = count / sum(count)) %>%
+  ungroup()
+
+
+write.table(Niche_by_patient,file="E:/Projects/PREDIX_HER2/Multimodal/Figures/SourceData/niche_clusters_by_patient.txt",quote = F,row.names =F,sep="\t")
 
 cell_proportion_by_Niche$proportion[cell_proportion_by_Niche$proportion<0.05]=0
 cell_proportion_by_Niche$plot_proportion <- cell_proportion_by_Niche$proportion
@@ -130,8 +146,6 @@ Fig <-
 Fig
 
 ggsave(Fig, file="E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS10/Figs10e.pdf", width=9, height=4)
-
-
 
 
 

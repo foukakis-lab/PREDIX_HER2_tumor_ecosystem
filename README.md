@@ -27,7 +27,7 @@ Data pre-processing & Multi-omics metrics curation
 Figure
 -----------
 -  Figure1-7
--  FigureS1-10
+-  FigureS1-11
 
 ML pipeline
 -----------

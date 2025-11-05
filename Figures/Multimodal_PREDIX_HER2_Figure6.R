@@ -69,6 +69,7 @@ for (id in names(data_list)) {
 
 df=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure6/Niche_meta.rds")
 df$group=df$niche_clusters
+table(is.na(df$cell_state))
 data_list <- split(df, df$sampleID)
 # 循环导出每个子数据集
 for (id in names(data_list)) {

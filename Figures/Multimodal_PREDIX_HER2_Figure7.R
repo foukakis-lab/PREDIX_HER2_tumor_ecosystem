@@ -142,6 +142,10 @@ pdf("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure7/Fig7a.pdf", width
 draw(p)  
 dev.off()
 
+data=as.data.frame(data)
+tab_csv=data[,c("Clin_Arm","Clin_TUMSIZE","Clin_ANYNODES","Clin_ER","Clin_prolifvalu",colnames(mat))]
+tab_csv=na.omit(tab_csv)
+write.csv(tab_csv, file = "E:/Projects/PREDIX_HER2/Multimodal/Table/supplemental_tab8.csv")
 # fig7b-d
 ##########All##########
 library(data.table);library(ggplot2);library(Polychrome)

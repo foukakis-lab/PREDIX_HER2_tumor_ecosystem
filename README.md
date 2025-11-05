@@ -8,6 +8,10 @@ This repository contains the code and workflows used for analyses presented in t
 
 -  PREDIX HER2 trial (Hatschek T et al; JAMA Oncol. 2021)
 
+<div align="center">
+  <img src="./Resource/predixHER2.png" alt="predixHER2" width="700">
+</div>
+
 
 Data pre-processing & Multi-omics metrics curation
 -----------

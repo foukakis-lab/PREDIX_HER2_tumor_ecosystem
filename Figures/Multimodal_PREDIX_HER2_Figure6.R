@@ -323,4 +323,98 @@ Fig3c <-
         plot.margin = unit(c(0.5,0.2,0.2,0.5), "lines"))
 Fig3c
 
+##########################################
+######### Per cell distance #############
+#########################################
+library(Matrix)
+library(ggplot2)
+library(Seurat)
+library(phenoptr)
+library(dplyr)
+library(purrr)
+df=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure6/coordinates_curated.rds")
+df$cell=df$cell_id
+df=df[,c("cell","cell_state","cell_type")]
+centroids=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Xenium/centroids_metadata.rds")
+centroids
+df=left_join(df,centroids)
+df=df[!df$orig.ident%in%c("1310_BL","1807_BL","1204_BL"),] 
+
+#df$cell_type[df$cell_state=="Mast cells"]="Mast_cell"
+df$cell_type[df$cell_state%in%c("Basal_SC","Her2E_SC","LumA_SC","LumB_SC")]="Tumor"
+df=df[df$cell_type%in%c("Tumor","Bcell","Tcell","Myeloid"),]
+row.names(df)=df$cell
+df$sampleID=df$orig.ident
+# For efficiently merging results
+
+# 1. Get all unique sample IDs
+samples <- unique(df$sampleID)
+
+# 2. Create an empty list to temporarily store the results of each sample
+dist_list <- list()
+
+# 3. Loop through each sample to calculate distances
+for (current_sample in samples) {
+  
+  message("Processing sample: ", current_sample)
+  
+  # Extract data for the current sample
+  sample_df <- df %>% filter(sampleID == current_sample)
+  
+  # Check if the current sample is empty (in case it was completely filtered out earlier)
+  if (nrow(sample_df) == 0) {
+    message("  -> Current sample is empty, skipping.")
+    next
+  }
+  
+  # Convert to the specific format and column names strictly required by phenoptr
+  cds <- sample_df %>%
+    mutate(
+      `Cell X Position` = x,
+      `Cell Y Position` = y,
+      Phenotype = as.character(cell_type),
+      `Cell ID` = rownames(sample_df) 
+    ) %>%
+    select(`Cell X Position`, `Cell Y Position`, Phenotype, `Cell ID`) %>%
+    as_tibble()
+  
+  # Calculate nearest distance directly with the prepared data (no need to filter again)
+  dist_result <- tryCatch({
+    find_nearest_distance(cds)
+  }, error = function(e) {
+    message("  -> Error calculating distance: ", e$message)
+    return(NULL) # Return NULL if this sample causes an error
+  })
+  
+  # If calculation is successful, record the sampleID and store it in the list
+  if (!is.null(dist_result)) {
+    dist_result$sampleID <- current_sample 
+    dist_list[[current_sample]] <- dist_result
+  }
+}
+
+# 4. Loop finished, combine the distance data from all samples into one data frame
+final_dist_df <- bind_rows(dist_list)
+
+saveRDS(final_dist_df,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure6/ImmuneCell2tumor_distance.rds')
+
+
+###########  K-distance plot #############
+library(data.table);library(ggplot2)
+clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
+clin=clin[,c("patientID","Response","Arm")]
+csd_with_distance=readRDS('E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure6/ImmuneCell2tumor_distance.rds')
+df=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure6/coordinates_curated.rds")
+df$patientID=NA
+df$patientID=substr(df$cell_id,1,4)%>%as.integer()
+df=left_join(df,clin,by="patientID")
+#df$cell_type[df$cell_state=="Mast cells"]="Mast_cell"
+df$cell_type[df$cell_state%in%c("Basal_SC","Her2E_SC","LumA_SC","LumB_SC")]="Tumor"
+df=df[df$cell_type%in%c("Tumor","Bcell","Tcell","Myeloid"),]
+df=df[!df$patientID%in%c("1310","1807","1204"),] 
+df=cbind(df,csd_with_distance)
+
+d=df[df$cell_state%in%c("Treg"),]  # "Tcell","Myeloid"
+ggplot(d[d$Arm=="T-DM1",], aes(`Distance to Tumor`, color=Response)) +
+  geom_density(size=0.5)
 

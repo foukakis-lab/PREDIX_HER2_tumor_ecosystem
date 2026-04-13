@@ -153,40 +153,6 @@ df=left_join(clin,df,by="sampleID")
 write.table(df,file="E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure2/source_data_figure2a.txt",quote = F,row.names =F,sep="\t")
 
 #Fig.2b
-library(vcd);library("ggsci");library(tidyverse);library(data.table)
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")
-genomic=left_join(genomic,clin,by="patientID") # genomic=genomic[genomic$switch=="No",]
-genomic$Response=factor(genomic$Response,levels = c("RD","pCR"))
-genomic$TP53[genomic$coding_mutation_TP53_oncokb==1]="Mutation"
-genomic$TP53[genomic$coding_mutation_TP53_oncokb==0]="Wild type"
-
-
-ftable(genomic$Arm,genomic$ER,genomic$TP53,genomic$Response)
-ftable(genomic$Arm)
-mosaic( ~ Arm + ER + Response + TP53, data = genomic,
-        highlighting = "TP53", highlighting_fill = c("#BC3C29FF","#6F99ADFF"),
-        direction = c("v","h","v","h"))
-
-# 5X5 55%
-DHP=genomic[genomic$Arm=="DHP",]
-TDM1=genomic[genomic$Arm=="T-DM1",]
-
-table(DHP$coding_mutation_TP53_oncokb,DHP$Response,DHP$ER)
-table(TDM1$coding_mutation_TP53_oncokb,TDM1$Response,TDM1$ER)
-
-interaction_2<- glm(pCR ~ coding_mutation_TP53_oncokb*Arm+coding_mutation_TP53_oncokb+Arm+ER, family = "binomial", data =genomic)
-library(tableone)
-ShowRegTable(interaction_2)
-
-
-interaction_2<- glm(pCR ~ coding_mutation_TP53_oncokb+ER, family = "binomial", data =genomic[genomic$Arm=="T-DM1",])
-library(tableone)
-ShowRegTable(interaction_2)
-interaction_2<- glm(pCR ~ coding_mutation_TP53_oncokb+ER, family = "binomial", data =genomic[genomic$Arm=="DHP",])
-library(tableone)
-ShowRegTable(interaction_2)
-#Fig.2c
 library(tableone);library(tidyverse);library(caret);library(foreach);library(stats);library(lmtest);library(data.table);library(readxl)
 library(forestplot);library(ggpubr)
 source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
@@ -239,7 +205,7 @@ p1 <- ggplot(DHP, aes(x = lnOR, y = log10FDR, fill= group)) +
   theme(legend.position="none", panel.grid=element_blank())
 p1
 #--------------
-#Fig.2d
+#Fig.2c
 #--------------
 TDM1=results[,c("biomarker","group","TDM1_OR","TDM1_LCI","TDM1_UCI","TDM1_lr_p")]
 TDM1$TDM1_OR=as.numeric(TDM1$TDM1_OR)
@@ -281,7 +247,7 @@ ggarrange(p1,p2)
 #8X3.5
 
 #--------------
-#Fig.2e
+#Fig.2d
 #--------------
 ##################################
 ########P value genomic metrics###
@@ -293,12 +259,12 @@ clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curate
 genomic=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.rds")
 data=left_join(genomic,clin,by="patientID")
 variable0=c("COSMIC.Signature.2","COSMIC.Signature.3","COSMIC.Signature.6",
-            "COSMIC.Signature.7","COSMIC.Signature.10","COSMIC.Signature.13")
+            "COSMIC.Signature.7","COSMIC.Signature.10","COSMIC.Signature.13","TMB_clone")
 data[,variable0]=data[,variable0] %>% mutate(across(where(is.numeric), scale))
 df=data[!is.na(data$COSMIC.Signature.2),]
 results0=Logistic_batch_adjER(df,"pCR","Arm",variable0,"ER")%>%as.data.frame()
 
-variable=c("TMB_uniform","TMB_clone","CNV_burden","LOH_Del_burden","HRD")
+variable=c("TMB_uniform","CNV_burden","LOH_Del_burden","HRD")
 data[,variable]=data[,variable] %>% mutate(across(where(is.numeric), scale))
 df=data
 results=Logistic_batch_adjER(df,"pCR","Arm",variable,"ER")%>%as.data.frame()
@@ -340,7 +306,7 @@ ggplot(data=df,aes(Genomic,logOR,fill=group))+
 #7X4
 
 
-#Fig.2f
+#Fig.2e
 ##################################
 #########Subgroup forest##########
 ##################################
@@ -352,10 +318,10 @@ require(openxlsx)
 source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
 ## binary variable ##
 clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")%>%as.data.frame()
+genomic=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.rds")%>%as.data.frame()
 CNA=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/CUTseq/GISTIC2/PREDIX_HER2_baseline/CUTseq_gene_baseline_complemental.rds")
 mutation=genomic[,c("patientID","coding_mutation_TP53_oncokb")]
-CNA=CNA[,c("BRCA2","FGFR1","NCOR1","ERBB2","PIK3CA","MAP3K1")]
+CNA=CNA[,c("BRCA2","ERBB2","PIK3CA")]
 colnames(CNA)=paste0("CNA_",colnames(CNA))
 CNA$patientID=row.names(CNA)%>%as.integer()
 data=left_join(clin,mutation,by="patientID")%>%left_join(CNA,by="patientID")%>%as.data.frame()
@@ -364,28 +330,23 @@ data$CNA_BRCA2_Del[data$CNA_BRCA2%in%c(-2,-1)]="1"
 data$CNA_ERBB2_Amp[data$CNA_ERBB2%in%c(0,-1,-2)]="0"
 data$CNA_ERBB2_Amp[data$CNA_ERBB2%in%c(2,1)]="1"
 
-bin_var=c("coding_mutation_TP53_oncokb","CNA_BRCA2_Del","CNA_ERBB2_Amp")
+bin_var=c("CNA_BRCA2_Del","CNA_ERBB2_Amp")
 data[,bin_var]=lapply(as.data.frame(data[,bin_var]),function(x) as.factor(x))
 data$Arm=factor(data$Arm,levels = c("DHP","T-DM1"))
 res=Logistic_batch_bin_subgroup(data,bin_var)%>%as.data.frame()
 
-df=data[!is.na(data$coding_mutation_TP53_oncokb),]
-variable=c("coding_mutation_TP53_oncokb")
-mut=Logistic_batch_adjER(df,"pCR","Arm",variable,"ER")%>%as.data.frame()
-
 df=data[!is.na(data$CNA_BRCA2_Del),]
 variable=c("CNA_BRCA2_Del","CNA_ERBB2_Amp")
 cna=Logistic_batch_adjER(df,"pCR","Arm",variable,"ER")%>%as.data.frame()
-res_bin=rbind(mut,cna)
 
-all.equal(res$biomarker,res_bin$biomarker)
-bin=cbind(res,res_bin)
+all.equal(res$biomarker,cna$biomarker)
+bin=cbind(res,cna)
 ## continuous variable ##
 source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
 clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
 genomic=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_metrics_PREDIX_HER2.txt")%>%as.data.frame()
 genomic=inner_join(genomic,clin,by="patientID")%>%as.data.frame()
-variable=c("LOH_Del_burden","COSMIC.Signature.13")
+variable=c("LOH_Del_burden") #"COSMIC.Signature.13"
 genomic=slice_metric(genomic,variable,20,80,5)
 ## re-run the batch logistic
 selected_columns <- grep("_per_", colnames(genomic), value = TRUE)
@@ -417,7 +378,7 @@ tm <- forest_theme(base_size = 10,
                    arrow_type = "closed",
                    footnote_col = "blue")
 
-p <- forest(df[,c(1:3,8:10)],
+p <- forest(df[,c(1:3,7:9)],
             est = df$OR,
             lower = df$Low, 
             upper = df$High,

@@ -27,7 +27,7 @@ Figure
 ML pipeline
 -----------
 
-Custom integrative ML pipeline is available here: https://github.com/gmanikis/integrative_AI
+Custom integrative multivariable modeling pipeline is available here: https://github.com/gmanikis/integrative_AI
 
 nf-core workflow
 ------------

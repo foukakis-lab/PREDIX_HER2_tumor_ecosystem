@@ -206,10 +206,10 @@ rna=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/transcripto
 rna$patientID=as.double(rna$patientID)
 clin=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.rds")
 data=left_join(rna,clin,by="patientID")%>%as.data.frame()
-variable=c("Taxane_response","pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
+variable=c("Taxane_response","pik3ca_sig","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
            "Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism",
            "Glycolysis","Hypoxia")
-norm_variable=c("pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
+norm_variable=c("pik3ca_sig","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
                 "Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism",
                 "Glycolysis","Hypoxia")
 data[,norm_variable]=scale(data[,norm_variable]) 
@@ -230,7 +230,7 @@ df$group=factor(df$group,levels = c("TDM1","DHP"))
 unique(df$Signature)
 df$Signature=factor(df$Signature,levels =c("Hypoxia","Glycolysis","Fatty_acid_metabolism","Glutathione_metabolism",
                                            "Citrate_cycles","Purine_metabolism","Oxidative_phosphorylation","Apoptosis","EMT","Exosome",
-                                           "Endocytosis","Lysosome","ABC_transporter","pik3ca_sig","Taxane_response"))
+                                           "Endocytosis","Lysosome","pik3ca_sig","Taxane_response"))
 df=df[order(df$Signature),]
 baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
 source (paste0(baseDir,"/Code/theme.R"))
@@ -260,7 +260,7 @@ source("E:/Projects/PREDIX_HER2/Multimodal/Code/Logistic_batch.R")
 clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
 rna=fread('E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/transcriptomic_metrics_PREDIX_HER2.txt')
 genomic=inner_join(rna,clin,by="patientID")%>%as.data.frame()
-variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","ABC_transporter","Exosome","Hypoxia","EMT")
+variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","Exosome","Hypoxia","EMT")
 genomic=slice_metric(genomic,variable,20,80,5)
 ## re-run the batch logistic
 selected_columns <- grep("_per_", colnames(genomic), value = TRUE)
@@ -283,7 +283,7 @@ table(genomic$Hypoxia_per_80,genomic$Arm)
 #ShowRegTable(whole)
 # forest plot #
 library(data.table)
-df=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure3/Subgroup_Forestplot.csv")
+df=fread("E:/Projects/PREDIX_HER2/Multimodal/Figures/Figure2/Subgroup_Forestplot.csv")
 df$DHP <- ifelse(is.na(df$DHP), "", df$DHP)
 df$`T-DM1` <- ifelse(is.na(df$`T-DM1`), "", df$`T-DM1`)
 df$`P for interaction` <- ifelse(is.na(df$`P for interaction`), "", df$`P for interaction`)

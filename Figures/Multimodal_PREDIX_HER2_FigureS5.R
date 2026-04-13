@@ -510,13 +510,13 @@ ggi_sig<- ggi(data=t(tpm), annot=genes, do.mapping=TRUE)
 pik3ca_sig <- pik3cags(data=t(tpm), annot=genes, do.mapping=TRUE)
 genefu=data.frame(ggi_sig=ggi_sig$score,pik3ca_sig=pik3ca_sig)
 genefu$sampleID=row.names(genefu)
-####ABC_TRANSPORTERS#######
+####Signatures#######
 library(IOBR)
 input=as.matrix(tpm)%>%round(2)
 ABC=calculate_sig_score(eset=input, signature = kegg, method = "ssgsea",parallel.size=16)
-ABC=ABC[,c("ID","KEGG_ABC_TRANSPORTERS","KEGG_APOPTOSIS","KEGG_LYSOSOME","KEGG_ENDOCYTOSIS","KEGG_OXIDATIVE_PHOSPHORYLATION",
+ABC=ABC[,c("ID","KEGG_APOPTOSIS","KEGG_LYSOSOME","KEGG_ENDOCYTOSIS","KEGG_OXIDATIVE_PHOSPHORYLATION",
            "KEGG_PURINE_METABOLISM","KEGG_CITRATE_CYCLE_TCA_CYCLE","KEGG_GLUTATHIONE_METABOLISM","KEGG_FATTY_ACID_METABOLISM")]
-colnames(ABC)=c('sampleID',"ABC_transporter","Apoptosis","Lysosome","Endocytosis","Oxidative_phosphorylation",
+colnames(ABC)=c('sampleID',"Apoptosis","Lysosome","Endocytosis","Oxidative_phosphorylation",
                 "Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism")
 
 sig=calculate_sig_score(eset=input, signature = signature_collection, method = "ssgsea",parallel.size=16)
@@ -562,10 +562,10 @@ table(data$Arm)
 data$pCR[data$pCR=="Yes"]=1
 data$pCR[data$pCR=="No"]=0
 
-variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
+variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
            "Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism",
            "Glycolysis","Hypoxia")
-norm_variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","ABC_transporter","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
+norm_variable=c("Taxane_response","HER2DX_pCR_likelihood_score","pik3ca_sig","Apoptosis","Lysosome","Endocytosis","EMT","Exosome",
                 "Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles","Glutathione_metabolism","Fatty_acid_metabolism",
                 "Glycolysis","Hypoxia")
 data[,norm_variable]=scale(data[,norm_variable]) 
@@ -582,9 +582,9 @@ df$logOR=log(as.numeric(df$OR))
 unique(df$Signature)
 df$Signature=factor(df$Signature,levels =c("Hypoxia","Glycolysis","Fatty_acid_metabolism","Glutathione_metabolism",
                                            "Citrate_cycles","Purine_metabolism","Oxidative_phosphorylation","Apoptosis","EMT","Exosome",
-                                           "Endocytosis","Lysosome","ABC_transporter","pik3ca_sig",
-                                           "HER2DX_pCR_likelihood_score","Taxane_response"))
+                                           "Endocytosis","Lysosome","pik3ca_sig","Taxane_response"))
 df=df[order(df$Signature),]
+df=df[df$Signature!="HER2DX_pCR_likelihood_score",]
 baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
 source (paste0(baseDir,"/Code/theme.R"))
 figure_font_size=13
@@ -600,229 +600,12 @@ ggplot(data=df,aes(Signature,logOR,fill=group))+
         panel.border = element_rect(colour = "black", fill=NA, size=0.8),
         plot.margin = unit(c(0.5,0.5,0.5,1), "lines"))+
   coord_flip()+scale_y_continuous(breaks = c(-0.5, 0, 0.5))
-#############################
-#############################
-#############################
 
 
 
 
 
 
-
-
-
-
-
-# For appeal 
-########HER2-enriched########
-protein=as.data.frame(fread("E:/Projects/PREDIX_HER2/Multimodal/Resource/gene_with_protein_product.txt"))
-protein=protein$symbol
-# read salmon count (with batch correction)
-count=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/Salmon_count_withbatchcorrection.rds")
-txi=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/PREDIX_HER2_baseline_curated_txi.rds")
-gene=intersect(protein,row.names(count))
-abundance=txi$abundance[gene,colnames(count)]
-count=txi$counts[gene,colnames(count)]
-length=txi$length[gene,colnames(count)]
-txi$abundance=txi$abundance[gene,colnames(count)]
-txi$counts=txi$counts[gene,colnames(count)]
-txi$length=txi$length[gene,colnames(count)]
-# read meta data
-batch=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/PREDIX_HER2_baseline_RNA-seq_curated_meta.rds")
-batch$batch=paste0("Run",batch$batch,"_",batch$lane)
-df=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/transcriptomic_metrics_PREDIX_HER2.txt")
-#batch$batch=paste0("Run",batch$batch)
-batch$patientID=as.integer(batch$patientID)
-batch=batch[,c("patientID","batch")]
-clin=fread("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.txt")
-meta=data.frame(sampleID=colnames(count));meta$patientID=substr(meta$sampleID,9,12)%>%as.integer()
-meta=left_join(meta,clin,by="patientID")%>%
-  left_join(batch,by="patientID")%>%
-  left_join(df,by="patientID")
-meta$Response=factor(meta$Response,levels = c("RD","pCR"))
-row.names(meta)=meta$sampleID
-all.equal(meta$sampleID,colnames(count))
-all.equal(meta$sampleID,colnames(length))
-########for DHP HER2-enriched########
-## DESeq2
-library("DESeq2")
-meta$Response=as.factor(meta$Response)
-#meta$batch=as.factor(meta$batch)
-dds <- DESeqDataSetFromTximport(txi,
-                                colData = meta,
-                                design = ~batch+Response) #batch + Response
-dim(dds)
-smallestGroupSize <- 10
-keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
-table(keep)
-dds <- dds[keep,]
-TDM1_Her2=dds[,dds$Arm=="T-DM1"&dds$sspbc.subtype=="Her2"]
-TDM1_Her2$batch=as.factor(TDM1_Her2$batch)
-design(TDM1_Her2) <- ~ Response
-
-DHP_Her2=dds[,dds$Arm=="DHP"&dds$sspbc.subtype=="Her2"]
-DHP_Her2$batch=as.factor(DHP_Her2$batch)
-design(DHP_Her2) <- ~ Response
-########for T-DM1 HER2-enriched########
-res_TDM1_Her2 <- DESeq(TDM1_Her2)
-res_TDM1_Her2 <- lfcShrink(res_TDM1_Her2,coef=c("Response_pCR_vs_RD"), type="apeglm")
-summary(res_TDM1_Her2)
-res_TDM1=as.data.frame(res_TDM1_Her2)
-res_TDM1$gene=row.names(res_TDM1)
-
-########for DHP HER2-enriched########
-res_DHP_Her2 <- DESeq(DHP_Her2)
-res_DHP_Her2 <- lfcShrink(res_DHP_Her2,coef=c("Response_pCR_vs_RD"), type="apeglm")
-summary(res_DHP_Her2)
-res_DHP=as.data.frame(res_DHP_Her2)
-res_DHP$gene=row.names(res_DHP)
-
-driverGenes<- scan("E:/Projects/PREDIX_HER2/Multimodal/Resource/breast-cancer-driver-genes.txt", what=character()) #breast cancer
-#cancergenes<-fread('E:/Projects/PREDIX_HER2/Multimodal/Resource/Census_allMon Nov 28 13_48_06 2022.csv')
-#cancergenes=cancergenes$`Gene Symbol`
-#driverGenes=c(driverGenes,cancergenes)
-
-nrow(res_TDM1[!is.na(res_TDM1$padj)&res_TDM1$padj<0.05&res_TDM1$log2FoldChange>0.5,])
-nrow(res_TDM1[!is.na(res_TDM1$padj)&res_TDM1$padj<0.05&res_TDM1$log2FoldChange<(-0.5),])
-nrow(res_DHP[!is.na(res_DHP$padj)&res_DHP$padj<0.05&res_DHP$log2FoldChange>0.5,])
-nrow(res_DHP[!is.na(res_DHP$padj)&res_DHP$padj<0.05&res_DHP$log2FoldChange<(-0.5),])
-
-genes_to_showname =intersect(union(res_TDM1$gene[abs(res_TDM1$log2FoldChange)>0.5&res_TDM1$padj<0.05],
-                                   res_DHP$gene[abs(res_DHP$log2FoldChange)>0.5&res_DHP$padj<0.05]),driverGenes) 
-genes_to_showname=union(genes_to_showname,union(res_TDM1$gene[order(res_TDM1$log2FoldChange)][1:5],
-                                                res_TDM1$gene[order(-res_TDM1$log2FoldChange)][1:5]))
-genes_to_showname=union(genes_to_showname,union(res_DHP$gene[order(res_DHP$log2FoldChange)][1:5],
-                                                res_DHP$gene[order(-res_DHP$log2FoldChange)][1:5]))
-genes_to_showname<- intersect(union(res_TDM1$gene[abs(res_TDM1$log2FoldChange)>0.5&res_TDM1$padj<0.05],
-                                    res_DHP$gene[abs(res_DHP$log2FoldChange)>0.5&res_DHP$padj<0.05]),genes_to_showname) 
-genes_to_showname=union(genes_to_showname,c("ABCC12","ABCC3"))
-all.equal(res_TDM1$gene,res_DHP$gene)
-data=data.frame(ID=res_TDM1$gene,x=res_DHP$log2FoldChange,x_q=res_DHP$padj,y=res_TDM1$log2FoldChange,y_q=res_TDM1$padj)
-data[is.na(data)] <- 0.9
-genes_to_showname
-intersect(genes_to_showname,data$ID)
-
-genes_to_showname=intersect(genes_to_showname,data$ID)
-data$combined_sig=0
-data$combined_sig[data$x_q<0.05&data$y_q>0.05&abs(data$x)>0.5]=1 # sig only in one arm
-data$combined_sig[data$x_q>0.05&data$y_q<0.05&abs(data$y)>0.5]=1 # sig only in one arm
-data$combined_sig[data$x_q<0.05&data$y_q<0.05&abs(data$x)>0.5&abs(data$y)>0.5]=2 # sig for both arm
-table(data$combined_sig)
-data$group[data$combined_sig==0]="Notsig"
-data$group[data$x_q<0.05&data$combined_sig==1]="unique DEG in DHP arm"
-data$group[data$y_q<0.05&data$combined_sig==1]="unique DEG in T-DM1 arm"
-data$group[data$combined_sig==2&data$x*data$y<0]="opposite DEG"
-data$group[data$combined_sig==2&data$x*data$y>0]="shared DEG"
-table(data$group)
-range(data$x);range(data$y)
-data$gene_label <- ""
-row.names(data)=data$ID
-data[genes_to_showname, ]$gene_label <- genes_to_showname
-colours = c('grey', 'green3', 'gold3', 'blue')
-fig3a=data
-
-annot <- lapply(genes_to_showname, function(i) {
-  row <- data[i, ]
-  x <- row$x
-  y <- row$y
-  z <- sqrt(x^2 + y^2)
-  list(x = x, y = y,
-       text = i, textangle = 0, ax = x/z*75, ay = -y/z*75,
-       font = list(color = "black", size =11),
-       arrowcolor = "black", arrowwidth = 0.5, arrowhead = 0, arrowsize = 1.5,
-       xanchor = "auto", yanchor = "auto")
-})
-library(plotly)
-p <- plot_ly(data = data, x = ~x, y = ~y, type = 'scatter', 
-             mode = 'markers',
-             color = ~group, colors = colours,
-             marker = list(size = 7, 
-                           line = list(width = 0.25, color = 'white')),
-             text = data$gene_label, hoverinfo = 'text') %>%
-  layout(annotations = annot,
-         xaxis = list(title = "DHP Arm logFC(pCR vs RD)",
-                      color = 'black'),
-         yaxis = list(title = "T-DM1 Arm logFC(pCR vs RD)",
-                      color = 'black'),
-         font = list(size = 12),
-         legend = list(x = 0, y = 1, font = list(color = 'black'))) %>%
-  config(edits = list(annotationPosition = FALSE,
-                      annotationTail = TRUE,
-                      annotationText = TRUE),
-         toImageButtonOptions = list(format = "svg"))
-p
-
-
-
-library(fgsea)
-Hallmark<- gmtPathways("E:/Projects/PREDIX_HER2/Multimodal/Resource/h.all.v2023.2.Hs.symbols.gmt")
-geneList=Hallmark
-# fgsea - get Normalised Enrichment Score
-# For DHP
-df=res_DHP[!is.na(res_DHP$padj),]
-#df$enrichment_score <- (2*as.numeric(df$log2FoldChange > 0) - 1) * -log10(df$padj) # signed p-value
-df$enrichment_score <-df$log2FoldChange
-df <- df[order(df$enrichment_score, decreasing = TRUE),]
-ranks <- df$enrichment_score
-names(ranks) <- df$gene
-q <- fgsea(pathways = geneList, stats = ranks,minSize=15, maxSize=500, nperm=100000)
-gse_dhp=as.data.frame(q)
-gse_dhp$pathway <- gsub("HALLMARK_","",gse_dhp$pathway)
-row.names(gse_dhp)=gse_dhp$pathway
-# For T-DM1
-df=res_TDM1[!is.na(res_TDM1$padj),]
-#df$enrichment_score <- (2*as.numeric(df$log2FoldChange > 0) - 1) * -log10(df$padj) # signed p-value
-df$enrichment_score <-df$log2FoldChange
-df <- df[order(df$enrichment_score, decreasing = TRUE),]
-ranks <- df$enrichment_score
-names(ranks) <- df$gene
-q <- fgsea(pathways = geneList, stats = ranks,minSize=15, maxSize=500, nperm=100000)
-gse_tdm1=as.data.frame(q)
-gse_tdm1$pathway <- gsub("HALLMARK_","",gse_tdm1$pathway)
-row.names(gse_tdm1)=gse_tdm1$pathway
-# integrate
-term=union(gse_dhp$pathway[gse_dhp$padj<0.05&abs(gse_dhp$NES)>1],gse_tdm1$pathway[gse_tdm1$padj<0.05&abs(gse_tdm1$NES)>1])
-gse_dhp=gse_dhp[term,]
-gse_tdm1=gse_tdm1[term,]
-fig3b=cbind(gse_dhp,gse_tdm1)
-
-# Define the desired order for 'pathway'
-gse_dhp=gse_dhp[order(gse_dhp$NES),]
-desired_order <-gse_dhp$pathway  # Define your pathway names in the desired order
-# Reorder 'pathway' based on the desired order
-gse_dhp$pathway <- factor(gse_dhp$pathway, levels = desired_order)
-gse_tdm1$pathway <- factor(gse_tdm1$pathway, levels = desired_order)
-# ploting
-baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
-source (paste0(baseDir,"/Code/theme.R"))
-figure_font_size=13
-dhp <- 
-  ggplot(gse_dhp,aes(x=pathway,y=(NES),color=NES))+
-  geom_point(aes(size= -log10(padj)))+
-  geom_hline(yintercept=0,color="black", linetype="dotted")+
-  labs(x="",y="NES")+
-  coord_flip()+
-  scale_colour_gradient2(low = "#375E97",mid = "white", high = "#FB6542")+
-  scale_size_continuous(name=expression(italic(-log[10]~padj)),breaks = c(1:3))+
-  theme_manuscript(base_size = figure_font_size)+
-  theme(axis.text.y = element_text(face="italic"),
-        plot.margin = unit(c(1.1,1.5,0,0.5), "lines"))
-tdm1 <- 
-  ggplot(gse_tdm1,aes(x=pathway,y=(NES),color=NES))+
-  geom_point(aes(size= -log10(padj)))+
-  geom_hline(yintercept=0,color="black", linetype="dotted")+
-  labs(x="",y="NES")+
-  coord_flip()+
-  scale_colour_gradient2(low = "#375E97",mid = "white", high = "#FB6542")+
-  scale_size_continuous(name=expression(italic(-log[10]~padj)),breaks = c(1:3))+
-  theme_manuscript(base_size = figure_font_size)+
-  theme(axis.text.y = element_text(face="italic"),
-        plot.margin = unit(c(1.1,1.5,0,0.5), "lines"))
-
-ggarrange(dhp,tdm1,nrow = 1,
-          font.label = list(size = figure_font_size, family="Helvetica"),
-          common.legend =T)
 
 
 

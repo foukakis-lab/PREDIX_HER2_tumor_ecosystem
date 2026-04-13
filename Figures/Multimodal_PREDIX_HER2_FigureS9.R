@@ -99,7 +99,101 @@ FigureS9b <-
 FigureS9b
 # 8X4
 
-# FigureS9c Immune cell
+#FigureS9c
+### ADC traficking sig ####
+library(GSVA);library(tidyverse)
+clin=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.rds")
+tpm <- readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/TMM-normalized-TPM.rds") 
+tpm <-as.matrix(tpm)
+sig=c("ERBB2","RAB11B", "RAB5A", "ERLIN2", "SLC12A2", "ABCC12", "VAMP3")
+## sig=c("RAB11B", "RAB5A", "ERLIN2", "SLC12A2", "ABCC12", "VAMP3")
+gene_sets <- list(ADC_traficking = sig)
+gsva_results <- gsva(expr = tpm, 
+                     gset.idx.list = gene_sets, 
+                     method = "gsva")%>%t()%>%as.data.frame()
+gsva_results$patientID=substr(row.names(gsva_results),9,12)%>%as.double()
+saveRDS(gsva_results,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS9/ADC_traficking.rds')
+d=left_join(gsva_results,clin,by='patientID')%>%select(c("Arm","Response","ADC_traficking")) # 
+
+d <- reshape2::melt(d,id.vars=c("Arm","Response"))
+d1 = d[d$Arm=="T-DM1",]
+d1$Arm=NULL
+d1$trial="PREDIX_T-DM1"
+#NCT02326974 data
+library(tidyverse);library(data.table);library(DESeq2);library(edgeR)
+cts=read.csv("E:/Projects/PREDIX_HER2/Multimodal/Validation/NCT02326974/GSE243375_All_Sample_Raw_Counts.csv",row.names = 1)%>%na.omit()%>%as.data.frame()
+txi=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/RNAseq/PREDIX_HER2_tximport_symbol.rds")
+length=txi$length%>%as.data.frame()
+cts=cts[intersect(row.names(cts),row.names(length)),]
+length=length[intersect(row.names(cts),row.names(length)),1]
+length=as.data.frame(matrix(rep(length,ncol(cts)), ncol = ncol(cts)))
+row.names(length)=row.names(cts);colnames(length)=colnames(cts)
+normMat <- length[row.names(cts),colnames(cts)]
+normMat <- normMat/exp(rowMeans(log(normMat)))
+normCts <- cts/normMat
+library(edgeR)
+eff.lib <- calcNormFactors(normCts,method="TMM") * colSums(normCts)
+head(eff.lib )
+normMat <- sweep(normMat, 2, eff.lib, "*")
+normMat <- log(normMat)
+y <- DGEList(cts)
+y <- scaleOffset(y, normMat)
+rpkms <- edgeR::rpkm(y$counts, gene.length=length[row.names(y$counts),c(1)], log = FALSE)
+tpm<- t( t(rpkms) / colSums(rpkms) ) * 1e6
+tpm=log2(tpm+1)
+colnames(tpm)<- gsub("site_(\\d+)", "site\\1", colnames(tpm))
+colnames(tpm) <- gsub("core_(\\d+)", "core\\1", colnames(tpm))
+meta=openxlsx::read.xlsx("E:/Projects/PREDIX_HER2/Multimodal/Validation/NCT02326974/176454-JCI-CMED-RV-3_sd_749148.xlsx")
+meta=meta%>%filter(tpt=="Pre")
+meta$sampleID=paste0("X",meta$sampleID)
+meta=meta[!duplicated(meta$patientID),]
+tpm=tpm[,intersect(colnames(tpm),meta$sampleID)]
+meta=meta[meta$sampleID%in%intersect(meta$sampleID,colnames(tpm)),]
+all.equal(meta$sampleID,colnames(tpm))
+table(meta$HR)
+sig=c("ERBB2","RAB11B", "RAB5A", "ERLIN2", "SLC12A2", "ABCC12", "VAMP3")
+sig=c("RAB11B", "RAB5A", "ERLIN2", "SLC12A2", "ABCC12", "VAMP3")
+gene_sets <- list(ADC_traficking = sig)
+gsva_results <- gsva(expr = tpm, 
+                     gset.idx.list = gene_sets, 
+                     method = "gsva")%>%t()%>%as.data.frame()
+saveRDS(gsva_results,file='E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS9/ADC_traficking_NCT02326974.rds')
+gsva_results$sampleID=row.names(gsva_results)
+d=left_join(gsva_results,meta,by='sampleID')%>%select(c("pCR","ADC_traficking")) # 
+d$Response=NA
+d$Response='pCR'
+d$Response[d$pCR=='No']='RD'
+d$pCR=NULL
+d <- reshape2::melt(d,id.vars=c("Response"))
+d$trial="NCT02326974_T-DM1+P"
+
+d=rbind(d,d1)
+d$Response=factor(d$Response,levels = c("RD","pCR"))
+d$trial=factor(d$trial,levels = c("PREDIX_T-DM1","NCT02326974_T-DM1+P"))
+baseDir <- "E:/Projects/PREDIX_HER2/Multimodal/"
+source (paste0(baseDir,"/Code/theme.R"))
+figure_font_size=12
+str(d)
+FigureS9c <-
+  ggplot(d,aes(x=trial,y=value,fill=Response))+
+  geom_boxplot(outlier.size = 0.2, width=0.8)+
+  facet_wrap(variable~.,scales="free_y",nrow=3)+
+  theme_manuscript(base_size = figure_font_size)+
+  scale_fill_pCR_RD(name="Treatment Response")+
+  stat_compare_means(aes(group=Response),label = "p.format", hide.ns = F,size=4,
+                     color="#000000", label.y.npc = 0.98)+
+  labs(y="Immune proportion",x="")+
+  theme(strip.background = element_blank(),
+        panel.grid.major.x  = element_blank(),
+        axis.line = element_blank(),
+        strip.text = element_text(size = figure_font_size),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.8),
+        plot.margin = unit(c(0.5,0.2,0.2,0.5), "lines"))
+FigureS9c
+
+
+
+# FigureS9d Immune cell
 library(data.table);library(ggplot2);library(scales);library(RColorBrewer);library(tidyverse)
 data=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Xenium/Xenium_baselineMeta_cell_state_curated.rds")
 data$cell_state=factor(data$cell_state,levels =c("LumA_SC","LumB_SC","Her2E_SC","Basal_SC","Normal epithelial",
@@ -149,7 +243,7 @@ FigureS9c <-
 FigureS9c
 ggsave(FigureS9c, file="E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS9/FigureS9c.pdf", width=20, height=8)
 
-#FigureS9d
+#FigureS9e
 Endo=c("Endothelial")
 Endo=data[data$cell_type%in%Endo,]
 Endo_proportion <- Endo %>%
@@ -192,7 +286,7 @@ FigureS9d
 ggsave(FigureS9d, file="E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS9/FigureS9d.pdf", width=8, height=3)
 
 
-#FigureS9d
+#FigureS9f
 stromal=c("Mesenchymal")
 stromal=data[data$cell_type%in%stromal,]
 stromal_proportion <- stromal %>%

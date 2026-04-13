@@ -55,6 +55,7 @@ mat<- centroids[,c("x","y")]
 mat<- as.matrix(mat)
 rownames(mat)<- centroids[,"cell"]
 
+
 # ===== radius analysis =====
 library(dplyr)
 library(tidyr)
@@ -286,6 +287,10 @@ coordinates <- centroids[, c("x", "y")]
 row.names(coordinates) <- centroids$cell
 metadata <- object@meta.data[, c("cell_type", "cell_state")]
 stopifnot(all.equal(row.names(coordinates), row.names(metadata)))
+coordinates_curated=data.frame(cell_id=row.names(coordinates),x=coordinates$x,y=coordinates$y,
+                               cell_type=metadata$cell_type,cell_state=metadata$cell_state)
+saveRDS(coordinates_curated,file="E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/Figure6/coordinates_curated.rds")
+
 vr_object <- formVoltRon(metadata = metadata, coords = coordinates)
 gc()
 
@@ -327,7 +332,7 @@ stopifnot(all.equal(row.names(coordinates), row.names(metadata)))
 vr_object <- formVoltRon(metadata = metadata, coords = coordinates)
 gc()
 
-r=50
+r=40
 Xen_data <- getSpatialNeighbors(vr_object, radius = r, method = "radius")
 Xen_data <- getNicheAssay(Xen_data, label = "cell_state", graph.type = "radius")
 vrMainFeatureType(Xen_data) <- "Niche"
@@ -350,7 +355,7 @@ res=Xen_data@metadata@cell
 res$sampleID=str_extract(res$id.1, "^[^_]+_[^_]+")
 res$cell.name=res$id.1
 res$cell_id <- str_extract(res$id.1, "[^_]+-[0-9]+$")
-res=res[,c("sampleID","cell_id","cell.name","niche_clusters","cell_state")]
+res=res[,c("sampleID","cell_id","cell.name","niche_clusters","cell_type","cell_state")]
 res$niche_clusters <- recode(
   res$niche_clusters,
   "Niche1" = "Niche1_Plasma",

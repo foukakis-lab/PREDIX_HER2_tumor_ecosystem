@@ -384,7 +384,87 @@ colnames(tab)=c("Allele1","Allele2","size")
 tree <- d3_nest(tab, value_cols = "size")
 sunburst(tree, width="100%", height=400)
 
+
 #FigureS7e
+library(tidyverse);library(IOBR)
+data=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/TME_subtype/pheno_immune_multiomics.rds")
+colnames(data)=gsub("Danaher-","",colnames(data))
+colnames(data)=gsub("TIDE_","",colnames(data))
+data1=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/TME_subtype/pheno_immune.rds")
+data1=data1[,c("patientID","Th2 cells","MHC.I_19272155")]
+data=left_join(data1,data,by="patientID")%>%as.data.frame()
+variable=c("B-cells","DC","Macrophages","T-cells","CD8-T-cells",     
+           "Neutrophils","Cytotoxic-cells","Treg","Distance_tumor_immune","Cell_Interaction",
+           "Mast-cells","NK-cells","CD45","TILs","Dysfunction",        
+           "Exclusion","CAF","TAM_M2","Th2 cells","MHC.I_19272155",
+           "TCR_clonality","BCR_clonality","FCGR3A","FCGR3B")
+
+res=batch_wilcoxon(
+  data,
+  target = "A01",
+  feature = variable,
+  feature_manipulation = FALSE
+)
+
+
+# A01: BCR clonality
+# A02: Cytotoxic-cells
+# B07: FCGR3A
+# B08: BCR clonality
+
+compare_pairs <- list(
+  c(group = "A01", feature = "BCR_clonality"),
+  c(group = "A02", feature = "Cytotoxic-cells"),
+  c(group = "B07", feature = "Macrophages"),
+  c(group = "B08", feature = "BCR_clonality")
+)
+
+df_list <- lapply(compare_pairs, function(p) {
+  data %>%
+    # 1. 直接提取并重命名为你绘图需要的 Response 和 value 列
+    # 注意这里使用了双括号 p[["group"]] 来获取纯字符串
+    select(Response = all_of(p[["group"]]), 
+           value = all_of(p[["feature"]])) %>%
+    
+    # 2. 创建分面标题
+    mutate(Facet_Title = paste0(p[["group"]], ": ", p[["feature"]])) %>%
+    
+    # 3. 剔除缺失值
+    drop_na() 
+})
+
+# 将列表合并为一个大数据框
+df <- bind_rows(df_list)
+
+figure_font_size = 13
+
+Fig <- ggplot(df, aes(x = Response, y = value, fill = Response)) +
+  geom_boxplot(outlier.size = 0.5, width = 0.7) +
+  # 使用刚才生成的 Facet_Title 进行分面
+  facet_wrap(~ Facet_Title, scales = "free_y", nrow = 1) +
+  
+  # 注意：这里我注释了你自定义的主题函数，用 theme_bw() 替代。
+  # 实际运行时，请取消注释你的函数并删掉 theme_bw()
+  # theme_manuscript(base_size = figure_font_size) +
+  # scale_fill_pCR_RD(name="Response") +
+  theme_bw(base_size = figure_font_size) + 
+  
+  stat_compare_means(aes(group = Response), label = "p.format", hide.ns = FALSE, size = 4,
+                     color = "#000000", label.y.npc = 0.90) +
+  labs(y = "", x = "") +
+  theme(strip.background = element_blank(),
+        panel.grid.major.x  = element_blank(),
+        axis.line = element_blank(),
+        strip.text = element_text(size = figure_font_size, face = "bold"),
+        panel.border = element_rect(colour = "black", fill = NA, size = 0.8),
+        plot.margin = unit(c(0.5, 0, 0.2, 1), "lines"))
+
+# 打印图像
+print(Fig)
+
+
+
+#FigureS7f
 library(data.table);library(tidyverse);library(ggpubr)
 clin=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Clin/PREDIX_HER2_clin_curated.rds")
 clin$patientID=as.character(clin$patientID)

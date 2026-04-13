@@ -14,12 +14,12 @@ DNA=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/genomic_met
 colnames(DNA)
 DNA_name=c("ERBB2_CNA","BRCA2_CNA","PIK3CA_CNA","RAB11FIP1_CNA","PPFIA1_CNA","CTTN_CNA",             
        "RPL19_CNA","PPP1R1B_CNA","MIEN1_CNA","GRB7_CNA","coding_mutation_TP53_oncokb",     
-       "coding_mutation_PIK3CA_oncokb","coding_mutation_ERBB2_oncokb","LOH_Del_burden",                  
-       "CNV_burden","TMB_uniform","TMB_clone","HRD")
+       "coding_mutation_PIK3CA_oncokb","coding_mutation_ERBB2_oncokb","coding_mutation_GATA3_oncokb",
+       "LOH_Del_burden","CNV_burden","TMB_uniform","TMB_clone","HRD")
 DNA <- DNA[, c("patientID",DNA_name)]
-mut=c("coding_mutation_TP53_oncokb","coding_mutation_PIK3CA_oncokb","coding_mutation_ERBB2_oncokb")
+mut=c("coding_mutation_TP53_oncokb","coding_mutation_PIK3CA_oncokb","coding_mutation_GATA3_oncokb","coding_mutation_ERBB2_oncokb")
 DNA[,mut]=lapply(DNA[, mut], function(x) ifelse(x == 1, "TRUE", "FALSE"))
-
+DNA$TMB_clone[DNA$TMB_clone]=0
 library(deconstructSigs);library(BSgenome.Hsapiens.UCSC.hg38);library(data.table)
 # https://www.nature.com/articles/s41586-019-1056-z#Sec2
 maf=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/WES/Mutect2_tumor_normal_baseline_PREDIX_HER2.PASS.oncokb_annotated_vaf0.5_curated.rds")
@@ -71,7 +71,7 @@ for (col in cols) {
 colnames(DNA)[2:ncol(DNA)]=paste0("DNA_",colnames(DNA)[2:ncol(DNA)])
 
 RNA=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/transcriptomic_metrics_PREDIX_HER2.rds")
-RNA_name=c("mRNA-ESR1","mRNA-ERBB2","mRNA-CD8A","mRNA-MKI67","mRNA-PGR","ABC_transporter","Apoptosis",                         
+RNA_name=c("mRNA-ESR1","mRNA-ERBB2","mRNA-CD8A","mRNA-MKI67","mRNA-PGR","Apoptosis",                         
        "Lysosome","Endocytosis","Oxidative_phosphorylation","Purine_metabolism","Citrate_cycles",
        "Glutathione_metabolism","Fatty_acid_metabolism","Glycolysis","Hypoxia","EMT",                               
        "Exosome","sspbc.subtype","Taxane_response","HER2DX_IGG",                        
@@ -80,6 +80,11 @@ RNA <- RNA[, c("patientID",RNA_name)]
 str(RNA)
 RNA$patientID=as.double(RNA$patientID)
 colnames(RNA)[2:ncol(RNA)]=paste0("RNA_",colnames(RNA)[2:ncol(RNA)])
+ADC_traficking=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Figures/Appeal/FigureS9/ADC_traficking.rds")
+ADC_traficking$RNA_ADC_trafficking=ADC_traficking$ADC_traficking
+ADC_traficking$ADC_traficking=NULL
+RNA=left_join(RNA,ADC_traficking,by="patientID")
+
 #immune
 #RNA
 data=readRDS("E:/Projects/PREDIX_HER2/Multimodal/Data/TME_subtype/pheno_immune_multiomics.rds")
@@ -143,5 +148,24 @@ write.table(no_na_data[,colnames(DNA)],file="E:/Projects/PREDIX_HER2/Multimodal/
 write.table(no_na_data[,colnames(Prot)],file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/Prot_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
 write.table(no_na_data[,colnames(image)],file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/Image_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
 
+clin=data[,colnames(clin)]
+clin <- clin[complete.cases(clin), ]
+write.table(clin,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/clin_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
+
+RNA=data[,colnames(RNA)]
+RNA <- RNA[complete.cases(RNA), ]
+write.table(RNA,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/RNA_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
+
+DNA=data[,colnames(DNA)]
+DNA <- DNA[complete.cases(DNA), ]
+write.table(DNA,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/DNA_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
+
+Prot=data[,colnames(Prot)]
+Prot <- Prot[complete.cases(Prot), ]
+write.table(Prot,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/Prot_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
+
+image=data[,colnames(image)]
+image <- image[complete.cases(image), ]
+write.table(image,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/Image_curated_metrics_PREDIX_HER2.txt",quote = F,row.names =F,sep="\t")
 
 

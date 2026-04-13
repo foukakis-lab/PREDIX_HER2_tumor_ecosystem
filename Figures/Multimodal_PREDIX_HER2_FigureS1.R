@@ -86,7 +86,7 @@ ggsurvplot(fit, data =data, palette = c("#fdb462","#20A39E"),
 table(data$Response)
 # 4X4
 library(tableone)
-cox.test <- coxph(Surv(EFS.time,EFS.status)~as.factor(Response)+Arm+as.factor(ER)+as.factor(TUMSIZE)+as.factor(ANYNODES), data=data) ##DII_density_with_supp
+cox.test <- coxph(Surv(EFS.time,EFS.status)~as.factor(Response)+Arm+as.factor(ER)+as.factor(TUMSIZE)+as.factor(ANYNODES), data=data) 
 ShowRegTable(cox.test)
 
 DHP=data[data$Arm=="DHP",]

@@ -134,6 +134,7 @@ Prot=left_join(Prot,MS,by="patientID")
 colnames(Prot)[2:ncol(Prot)]=paste0("Prot_",colnames(Prot)[2:ncol(Prot)])
 #merge
 data=left_join(clin,RNA,by='patientID')%>%left_join(DNA,by='patientID')%>%left_join(Prot,by='patientID')%>%left_join(image,by='patientID')%>%as.data.frame()
+data$
 write.table(data,file="E:/Projects/PREDIX_HER2/Multimodal/Data/Curated_metrics/clin_multiomics_curated_metrics_PREDIX_HER2_withNA.txt",quote = F,row.names =F,sep="\t")
 #levels(data$RNA_sspbc.subtype) <- c(levels(data$RNA_sspbc.subtype), "Unknown")
 #data$RNA_sspbc.subtype[is.na(data$RNA_sspbc.subtype)] <- "Unknown"
